@@ -1,0 +1,61 @@
+kubectl apply -f product-deployment.yaml
+kubectl apply -f redis-deployment.yaml
+kubectl apply -f cart-deployment.yaml
+kubectl apply -f postgres-deployment.yaml
+kubectl apply -f order-deployment.yaml
+
+# See the deployment
+kubectl get deployments
+
+# See the pods (actual running containers)
+kubectl get pods
+
+# See the service
+kubectl get services
+
+# Test the services
+kubectl port-forward service/product-service 8001:8001
+kubectl port-forward service/cart-service 8002:8002
+kubectl port-forward service/order-service 8003:8003
+
+curl http://localhost:8001/products
+curl http://localhost:8001/health
+
+curl -X POST http://localhost:8002/cart/user123/add -H "Content-Type: application/json" -d '{"product_id": 1, "quantity": 2}'
+curl http://localhost:8002/cart/user123
+curl -X POST http://localhost:8002/cart/user123/add -H "Content-Type: application/json" -d '{"product_id": 3, "quantity": 1}'
+curl http://localhost:8002/cart/user123
+
+curl http://localhost:8003/health
+curl -X POST http://localhost:8003/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user123",
+    "items": [
+      {"product_id": 1, "quantity": 2},
+      {"product_id": 3, "quantity": 1}
+    ],
+    "total": 2079.97
+  }'
+
+curl -X POST http://localhost:8003/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user123",
+    "items": [
+      {"product_id": 2, "quantity": 5},
+      {"product_id": 4, "quantity": 1}
+    ],
+    "total": 549.94
+  }'
+
+curl http://localhost:8003/orders/user123
+
+# Delete
+kubectl delete -f product-deployment.yaml
+
+# See what's still running
+kubectl get all
+
+# Delete everything in the current namespace
+kubectl delete all --all
